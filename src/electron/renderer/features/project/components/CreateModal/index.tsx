@@ -47,7 +47,9 @@ export const CreateModal = (): JSX.Element => {
       return console.warn(unwrapResult(result));
     }
 
-    setCreateModalPath(unwrapResult(result));
+    const path = unwrapResult(result);
+    setCreateModalPath(path);
+    setCreateModalName(path.split(/\/|\\/).pop() || '');
   };
 
   const selectMapData = async (): Promise<void> => {
