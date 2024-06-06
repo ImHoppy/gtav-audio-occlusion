@@ -6,8 +6,8 @@ import { useProject } from '../../context';
 
 import { FileImporter } from '../FileImporter';
 
-export const ProjectFileImporter = () => {
-  const { setCreateModalMapDataFile, setCreateModalMapTypesFile, setCreateModalOpen } = useProject();
+export const ProjectFileImporter: React.FC = () => {
+  const { setCreateModalMapDataFile, setCreateModalMapTypesFile, setCreateModalOpen, importProject } = useProject();
 
   const validateFile = (file: File): boolean => isXMLFilePath(file.path);
 
@@ -37,5 +37,16 @@ export const ProjectFileImporter = () => {
     setCreateModalOpen(true);
   };
 
-  return <FileImporter validateFile={validateFile} onFileImport={onFileImport} onButtonClick={onButtonClick} />;
+  const openProject = (file: File): void => {
+    importProject(file);
+  };
+
+  return (
+    <FileImporter
+      validateFile={validateFile}
+      onFileImport={onFileImport}
+      onButtonClick={onButtonClick}
+      openProject={openProject}
+    />
+  );
 };

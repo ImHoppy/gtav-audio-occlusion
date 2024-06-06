@@ -4,7 +4,7 @@ import path from 'path';
 import { err, isErr, ok, unwrapResult } from '@/electron/common';
 
 import { ProjectAPI } from '@/electron/common/types/project';
-import type { CreateProjectDTO } from '@/electron/common/types/project';
+import type { CreateProjectDTO, SerializedProject } from '@/electron/common/types/project';
 import type { CreateInteriorDTO } from '@/electron/common/types/interior';
 
 import { isXMLFilePath, isMapDataFilePath, isMapTypesFilePath } from '@/electron/common/utils/files';
@@ -18,6 +18,7 @@ import { Project } from './project';
 import { Interior } from './interior';
 
 import { forwardSerializedResult, sanitizePath, selectDirectory, selectFiles } from './utils';
+import { readFileSync, writeFileSync } from 'fs';
 
 const MAP_DATA_FILE_FILTERS = [{ name: '#map files', extensions: ['ymap.xml'] }];
 const MAP_TYPES_FILE_FILTERS = [{ name: '#typ files', extensions: ['ytyp.xml'] }];
@@ -33,6 +34,8 @@ export class ProjectManager {
     this.currentProject = null;
 
     ipcMain.handle(ProjectAPI.CREATE_PROJECT, this.createProject.bind(this));
+    ipcMain.handle(ProjectAPI.SAVE_PROJECT, this.saveProject.bind(this));
+    ipcMain.handle(ProjectAPI.IMPORT_PROJECT, this.importProject.bind(this));
     ipcMain.handle(ProjectAPI.GET_CURRENT_PROJECT, () => forwardSerializedResult(this.getCurrentProject()));
     ipcMain.handle(ProjectAPI.CLOSE_PROJECT, this.closeProject.bind(this));
     ipcMain.handle(ProjectAPI.SELECT_PROJECT_PATH, this.selectProjectPath.bind(this));
@@ -134,6 +137,63 @@ export class ProjectManager {
     }
 
     return ok(true);
+  }
+
+  public async saveProject(): Promise<Result<string, boolean>> {
+    if (!this.currentProject) {
+      return err('NO_PROJECT_TO_SAVE');
+    }
+
+    const serializedProject = {
+      name: this.currentProject.name,
+      path: this.currentProject.path,
+      interiors: this.currentProject.interiors.map(interior => ({
+        identifier: interior.identifier,
+        mapDataFilePath: interior.mapDataFilePath,
+        mapTypesFilePath: interior.mapTypesFilePath,
+      })),
+    };
+
+    const projectPath = path.join(this.currentProject.path, this.currentProject.name + '.json');
+    console.log(projectPath);
+    try {
+      writeFileSync(projectPath, JSON.stringify(serializedProject, null, 2));
+    } catch {
+      return err('FAILED_TO_WRITE_PROJECT_FILE');
+    }
+
+    return ok(true);
+  }
+
+  public async importProject(_: Event, file: string): Promise<Result<string, boolean>> {
+    console.log('bip boop', file);
+    if (this.currentProject) {
+      return err('PROJECT_ALREADY_OPEN');
+    }
+    if (file) {
+      const projectPath = path.resolve(file);
+      let serializedProject: SerializedProject;
+      try {
+        serializedProject = JSON.parse(readFileSync(projectPath, 'utf-8'));
+        console.log(serializedProject.name);
+        const project = new Project({ name: serializedProject.name, path: serializedProject.path });
+        for (const serializedInterior of serializedProject.interiors) {
+          const result = await this.addInteriorToProject(project, {
+            name: serializedInterior.identifier,
+            mapDataFilePath: serializedInterior.mapDataFilePath,
+            mapTypesFilePath: serializedInterior.mapTypesFilePath,
+          });
+          if (isErr(result)) {
+            return result;
+          }
+        }
+        this.currentProject = project;
+        return ok(true);
+      } catch {
+        return err('FAILED_TO_READ_PROJECT_FILE');
+      }
+    }
+    return err('NO_PROJECT_TO_IMPORT');
   }
 
   public closeProject(): Result<string, boolean> {

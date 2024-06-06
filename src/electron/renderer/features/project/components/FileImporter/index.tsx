@@ -1,4 +1,4 @@
-import React, { useState, DragEvent } from 'react';
+import React, { useState, DragEvent, FC } from 'react';
 import { FaFileImport } from 'react-icons/fa';
 
 import { Container, Button, CallToAction, Description } from './styles';
@@ -7,9 +7,10 @@ type FileImporterProps = {
   validateFile?: (files: File) => boolean;
   onFileImport?: (files: File[]) => void;
   onButtonClick?: () => void;
+  openProject?: (file: File) => void;
 };
 
-export const FileImporter = ({ validateFile, onFileImport, onButtonClick }: FileImporterProps) => {
+export const FileImporter: FC<FileImporterProps> = ({ validateFile, onFileImport, onButtonClick, openProject }) => {
   const [isDraggingOver, setIsDraggingOver] = useState(0);
 
   const dragOver = (event: DragEvent): void => {
@@ -32,6 +33,12 @@ export const FileImporter = ({ validateFile, onFileImport, onButtonClick }: File
     event.preventDefault();
 
     const files = event.dataTransfer.files;
+
+    if (files.length == 1 && files[0].path.endsWith('.json')) {
+      if (openProject) openProject(files[0]);
+      setIsDraggingOver(0);
+      return;
+    }
 
     if (files.length && onFileImport) {
       const fileList: File[] = [];
@@ -61,6 +68,8 @@ export const FileImporter = ({ validateFile, onFileImport, onButtonClick }: File
       </Button>
       <CallToAction>Create new project</CallToAction>
       <Description>or drag #map and #typ CodeWalker XML files</Description>
+      <CallToAction>Or drag to import project</CallToAction>
+      <Description>from a json file</Description>
     </Container>
   );
 };

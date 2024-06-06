@@ -13,6 +13,8 @@ interface IProjectProvider {
 
 interface IProjectContext {
   state: ProjectState;
+  saveProject: () => Promise<void>;
+  importProject: (file: File) => Promise<void>;
   fetchProject: () => Promise<void>;
   createProject: () => Promise<void>;
   closeProject: () => Promise<void>;
@@ -43,6 +45,24 @@ const projectContext = createContext<IProjectContext>({} as IProjectContext);
 const useProjectProvider = (): IProjectContext => {
   const [state, setState] = useState<ProjectState>();
   const [createModalState, setCreateModalState] = useState<CreateProjectModalState>(createModalinitialState);
+
+  const saveProject = async (): Promise<void> => {
+    const result: Result<string, SerializedProject> = await API.invoke(ProjectAPI.SAVE_PROJECT);
+
+    if (isErr(result)) {
+      return console.warn(unwrapResult(result));
+    }
+  };
+
+  const importProject = async (file: File): Promise<void> => {
+    const result: Result<string, SerializedProject> = await API.invoke(ProjectAPI.IMPORT_PROJECT, file.path);
+
+    if (isErr(result)) {
+      return console.warn(unwrapResult(result));
+    }
+
+    await fetchProject();
+  };
 
   const fetchProject = async (): Promise<void> => {
     const result: Result<string, SerializedProject | undefined> = await API.invoke(ProjectAPI.GET_CURRENT_PROJECT);
@@ -124,6 +144,8 @@ const useProjectProvider = (): IProjectContext => {
 
   return {
     state,
+    saveProject,
+    importProject,
     fetchProject,
     createProject,
     closeProject,

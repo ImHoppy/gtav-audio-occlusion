@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo } from 'react';
-import { FaTimes, FaFileDownload } from 'react-icons/fa';
+import { FaTimes, FaFileDownload, FaSave } from 'react-icons/fa';
 
 import { Container, Header, Content } from '@/electron/renderer/components/Page';
 
@@ -11,10 +11,15 @@ import { CreateModal } from '../CreateModal';
 import { ProjectFileImporter } from '../ProjectFileImporter';
 
 export const Project = (): JSX.Element => {
-  const { state, fetchProject, closeProject, writeGeneratedFiles } = useProject();
+  const { state, saveProject, fetchProject, closeProject, writeGeneratedFiles } = useProject();
 
   const options = useMemo(
     () => [
+      {
+        icon: <FaSave />,
+        label: 'Save project',
+        onClick: saveProject,
+      },
       {
         icon: <FaFileDownload />,
         label: 'Write files',
