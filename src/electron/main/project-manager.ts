@@ -155,7 +155,6 @@ export class ProjectManager {
     };
 
     const projectPath = path.join(this.currentProject.path, this.currentProject.name + '.json');
-    console.log(projectPath);
     try {
       writeFileSync(projectPath, JSON.stringify(serializedProject, null, 2));
     } catch {
@@ -166,7 +165,6 @@ export class ProjectManager {
   }
 
   public async importProject(_: Event, file: string): Promise<Result<string, boolean>> {
-    console.log('bip boop', file);
     if (this.currentProject) {
       return err('PROJECT_ALREADY_OPEN');
     }
@@ -175,7 +173,6 @@ export class ProjectManager {
       let serializedProject: SerializedProject;
       try {
         serializedProject = JSON.parse(readFileSync(projectPath, 'utf-8'));
-        console.log(serializedProject.name);
         const project = new Project({ name: serializedProject.name, path: serializedProject.path });
         for (const serializedInterior of serializedProject.interiors) {
           const result = await this.addInteriorToProject(project, {
