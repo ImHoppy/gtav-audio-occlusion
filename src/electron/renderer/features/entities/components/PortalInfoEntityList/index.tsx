@@ -7,6 +7,7 @@ import { useInterior } from '@/electron/renderer/features/interior';
 import { updatePortalEntity } from '@/electron/renderer/features/entities';
 
 import { SmallInput } from './styles';
+import { Button } from '../../../../components/Button';
 
 const MAX_OCCLUSION_MIN = 0;
 const MAX_OCCLUSION_MAX = 1;
@@ -108,6 +109,16 @@ export const PortalInfoEntityList = (): JSX.Element => {
     return rows;
   };
 
+  const setDefaultMaxOcclusion = (): void => {
+    portalInfoList.forEach(portalInfo => {
+      portalInfo?.portalEntityList.forEach((portalEntity, portalEntityIndex) => {
+        if (portalEntity.maxOcclusion === 0) {
+          updateMaxOcclusion(portalInfo.infoIndex, portalEntityIndex, '0.7');
+        }
+      });
+    });
+  };
+
   return (
     <TableContainer>
       <Table alternatedRowColors={false}>
@@ -116,7 +127,10 @@ export const PortalInfoEntityList = (): JSX.Element => {
             <th>Portal index</th>
             <th>Rooms</th>
             <th>Model</th>
-            <th>Max occlusion</th>
+            <th>
+              Max occlusion
+              <Button onClick={() => setDefaultMaxOcclusion()}>Reset to 0.7</Button>
+            </th>
             <th>Is door</th>
             <th>Is glass</th>
           </tr>
